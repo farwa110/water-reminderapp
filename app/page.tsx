@@ -1,69 +1,48 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="relative min-h-dvh overflow-hidden bg-(--background) px-6 text-(--foreground)">
+      {/* Background shapes */}
+      <div className="absolute -left-24 top-28 h-48 w-48 rounded-full bg-(--peach-light)" />
+      <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-var(--teal-light)" />
+
+      <div className="relative mx-auto flex min-h-dvh max-w-md flex-col items-center">
+        {/* Logo and introduction */}
+        <div className="flex flex-1 flex-col items-center justify-center pb-4 text-center">
+          <Image src="/water-drop.png" alt="Ripple water drop" width={180} height={200} className="h-36 w-auto object-contain" priority />
+
+          <h1 className="mt-8 text-6xl font-bold tracking-tight">Ripple</h1>
+
+          <p className="mt-5 text-xl leading-relaxed text-(--muted)">
+            Small sips. Big difference.
+            <br />
+            Stay hydrated, one reminder at a time.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Sign-in buttons */}
+        <div className="w-full space-y-4">
+          <Link href="/sign-up" className="flex h-16 w-full items-center justify-center gap-4 rounded-2xl border-2 border-(--border) bg-white text-lg font-semibold">
+            <span className="text-2xl font-bold text-[#4285F4]">G</span>
+            Continue with Google
+          </Link>
+
+          <Link href="/sign-up" className="flex h-16 w-full items-center justify-center rounded-2xl bg-(--foreground) text-lg font-semibold text-white">
+            Continue with email
+          </Link>
+
+          <p className="pt-6 text-center text-base text-(--muted)">
+            Already have an account?{" "}
+            <Link href="/sign-in" className="font-semibold text-(--coral)">
+              Log in
+            </Link>
+          </p>
         </div>
-      </main>
-    </div>
+
+        <p className="max-w-xs pb-7 pt-24 text-center text-sm leading-6 text-(--muted)">By continuing you agree to Ripple&apos;s Terms and Privacy Policy.</p>
+      </div>
+    </main>
   );
 }
