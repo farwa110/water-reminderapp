@@ -108,6 +108,14 @@ export default function OnboardingPage() {
               <option value="over-60">Over 60 minutes</option>
             </select>
           </label>
+          <label className="block">
+            <span className="mb-2 block font-semibold">What’s the outdoor temperature where you are today? (optional)</span>
+            <div className="relative">
+              <input type="number" name="temperatureC" min="-30" max="55" step="1" placeholder="e.g. 22" className="h-14 w-full rounded-2xl border border-(--border) bg-white px-4 pr-12 text-(--foreground) outline-none focus:border-(--teal)" />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-(--muted)">°C</span>
+            </div>
+            <span className="mt-2 block text-sm text-(--muted)">Enter today’s temperature, not your city’s yearly average.</span>
+          </label>
 
           <div className="grid grid-cols-2 gap-4">
             <label className="block">
