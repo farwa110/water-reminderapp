@@ -26,3 +26,108 @@ h2,
 h3 {
   font-family: var(--font-heading);
 }
+
+.ripple-ring {
+  position: absolute;
+  width: 48%;
+  aspect-ratio: 1;
+  border: 1px solid var(--teal);
+  border-radius: 50%;
+  opacity: 0;
+  animation: ripple-expand 7s linear infinite;
+}
+
+.ripple-ring-two {
+  animation-delay: -2.33s;
+}
+
+.ripple-ring-three {
+  animation-delay: -4.66s;
+}
+
+.ripple-drop {
+  animation: ripple-float 5s ease-in-out infinite;
+}
+
+.ripple-shadow {
+  animation: ripple-shadow-breathe 5s ease-in-out infinite;
+}
+
+@keyframes ripple-expand {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.22;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes ripple-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes ripple-shadow-breathe {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scaleX(0.8);
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ripple-ring,
+  .ripple-drop,
+  .ripple-shadow {
+    animation: none;
+  }
+
+  .ripple-ring {
+    opacity: 0.12;
+  }
+
+  .ripple-ring-two {
+    transform: scale(1.4);
+  }
+
+  .ripple-ring-three {
+    transform: scale(1.8);
+  }
+}
+.peach-float {
+  animation: peach-drift 18s ease-in-out infinite alternate;
+}
+
+.peach-float-delayed {
+  animation-delay: -9s;
+}
+
+@keyframes peach-drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+
+  to {
+    transform: translate(30px, -25px) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peach-float {
+    animation: none;
+  }
+}
