@@ -131,3 +131,48 @@ h3 {
     animation: none;
   }
 }
+/***** Ripple Water Drop Animation *****/
+
+.ripple-glass-orbit {
+  display: block;
+  animation: glassOrbit 6s linear infinite;
+}
+
+.ripple-water-wave {
+  animation: waterSway 3s ease-in-out infinite;
+}
+
+@keyframes glassOrbit {
+  0% {
+    transform: translate(0, -3px) rotate(-4deg);
+  }
+  25% {
+    transform: translate(3px, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(0, 3px) rotate(4deg);
+  }
+  75% {
+    transform: translate(-3px, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(0, -3px) rotate(-4deg);
+  }
+}
+
+@keyframes waterSway {
+  0%,
+  100% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ripple-glass-orbit,
+  .ripple-water-wave {
+    animation: none;
+  }
+}
