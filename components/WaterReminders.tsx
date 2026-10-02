@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bell, BellOff, Droplet, X } from "lucide-react";
+import { Bell, BellOff, Droplet, X, CircleCheck } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 
 type PlanItem = {
@@ -263,7 +263,17 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
             ))}
           </ol>
         ) : (
-          <p className="mt-4 text-sm leading-6 text-(--muted)">{remainingMl === 0 ? "You’ve reached your goal today. 🎉" : "No suitable reminder slots remain before bedtime."}</p>
+          // <p className="mt-4 text-sm leading-6 text-(--muted)">{remainingMl === 0 ? "You’ve reached your goal today. 🎉" : "No suitable reminder slots remain before bedtime."}</p>
+          <p className="mt-4 flex items-center gap-2 text-sm leading-6 text-(--muted)">
+            {remainingMl === 0 ? (
+              <>
+                <CircleCheck size={18} strokeWidth={1.5} className="shrink-0 text-(--teal)" aria-hidden="true" />
+                <span>You’ve reached your goal today.</span>
+              </>
+            ) : (
+              "No suitable reminder slots remain before bedtime."
+            )}
+          </p>
         )}
 
         {plan.length > 0 && plannedMl < remainingMl && <p className="mt-4 text-sm text-(--muted)">This interval allows {plan.length} breaks before bedtime. The rest of your goal is not scheduled.</p>}

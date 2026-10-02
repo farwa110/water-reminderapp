@@ -9,8 +9,9 @@ import DateTimeDisplay from "@/components/DateTimeDisplay";
 import WaterReminders from "@/components/WaterReminders";
 import DrinkButton from "@/components/drinkButton";
 import DrinkLog from "@/components/drinkLog";
-// import { formatTime } from "@/lib/utils";
-
+import { greetingTime } from "@/lib/greetingTime";
+import WaterDrop from "@/components/WaterDrop";
+import { CircleCheck } from "lucide-react";
 type WaterLog = {
   id: string;
   amount_ml: number;
@@ -40,13 +41,6 @@ function dayBounds(key: string) {
   const start = new Date(year, month - 1, day);
   const end = new Date(year, month - 1, day + 1);
   return { start, end };
-}
-
-function greeting(date: Date) {
-  const hour = date.getHours();
-  if (hour < 12) return "Good morning ☀️";
-  if (hour < 17) return "Good afternoon 🌿";
-  return "Good evening 🌙";
 }
 
 function errorMessage(error: unknown) {
@@ -436,6 +430,9 @@ export default function DashboardPage() {
   const plannedMl = plan.reduce((sum, item) => sum + item.amount, 0);
   const nextReminder = plan[0];
 
+  const currentGreeting = clock ? greetingTime(clock) : null;
+  const GreetingIcon = currentGreeting?.Icon;
+
   return (
     <main className=" relative overflow-hidden min-h-dvh bg-(--background) text-(--foreground)">
       <div className="pointer-events-none absolute -left-24 top-28 h-48 w-48 rounded-full bg-(--peach-light)" />
@@ -446,9 +443,17 @@ export default function DashboardPage() {
 
           <div className="relative flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-(--teal)">{greeting(clock)}</p>
+              {/* <p className="text-sm font-semibold text-(--teal)">{greeting(clock)}</p> */}
+              <p className="flex items-center gap-2 text-sm font-semibold text-(--teal)">
+                {currentGreeting?.text ?? "Welcome to Ripple"}
 
-              <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Hi, {firstName} 💧</h1>
+                {GreetingIcon ? <GreetingIcon size={18} strokeWidth={1.7} aria-hidden="true" /> : <WaterDrop width={16} height={22} className="shrink-0" />}
+              </p>
+
+              <h1 className="mt-2 flex items-center gap-3 text-3xl font-bold sm:text-4xl">
+                Hi, {firstName}
+                <WaterDrop width={26} height={36} className="shrink-0" />
+              </h1>
 
               <div className="mt-3 text-sm">
                 <DateTimeDisplay />
@@ -491,8 +496,18 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <p className="mt-5 text-lg font-semibold text-(--teal)">{remainingMl === 0 ? "Today’s goal reached 🎉" : `${remainingMl.toLocaleString()} ml left`}</p>
+              {/* <p className="mt-5 text-lg font-semibold text-(--teal)">{remainingMl === 0 ? "Today’s goal reached 🎉" : `${remainingMl.toLocaleString()} ml left`}</p> */}
 
+              <p className="mt-5 flex items-center gap-2 text-lg font-semibold text-(--teal)">
+                {remainingMl === 0 ? (
+                  <>
+                    <CircleCheck size={22} strokeWidth={1.5} aria-hidden="true" />
+                    <span>Today’s goal reached</span>
+                  </>
+                ) : (
+                  `${remainingMl.toLocaleString()} ml left`
+                )}
+              </p>
               {remainingMl > 0 && (
                 <p className="mt-1 text-sm text-(--muted)">
                   About {remainingGlasses} more {remainingGlasses === 1 ? "glass" : "glasses"} of 250 ml

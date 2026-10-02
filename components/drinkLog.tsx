@@ -2,6 +2,7 @@
 
 import { GlassWater } from "lucide-react";
 import { formatTime } from "@/lib/utils";
+import WaterDrop from "./WaterDrop";
 
 type WaterLog = {
   id: string;
@@ -46,10 +47,7 @@ export default function DrinkLog({ logs, busy, editingId, editAmount, onStartEdi
             <li key={log.id} className="rounded-2xl border border-(--border) p-4">
               <div className="flex items-center gap-4">
                 <span aria-hidden="true" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[#409e9e]/20 bg-(--teal-light)">
-                  <svg width="30" height="42" viewBox="0 0 32 44" fill="none">
-                    <path d="M16 2C16 2 3 20 3 29C3 36.2 8.8 42 16 42C23.2 42 29 36.2 29 29C29 20 16 2 16 2Z" fill="#409e9e" />
-                    <path d="M10 27C8.5 30.5 9.5 34 12 35.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
+                  <WaterDrop width={30} height={42} className="shrink-0" />
                 </span>
 
                 <div className="min-w-0 flex-1">

@@ -7,7 +7,10 @@ import { createSupabaseClient } from "@/lib/supabase";
 import { calculateWaterGoal, GLASS_ML, type OnboardingAnswers, type WaterGoal } from "@/lib/calculateWaterGoal";
 import DateTimeDisplay from "@/components/DateTimeDisplay";
 import { useSession, useUser, UserButton } from "@clerk/nextjs";
-import { Sun, Moon } from "lucide-react";
+import { greetingTime } from "@/lib/greetingTime";
+
+import WaterDrop from "@/components/WaterDrop";
+import { Sun, Moon, Sunset } from "lucide-react";
 
 export default function GoalPage() {
   const { user } = useUser();
@@ -27,13 +30,6 @@ export default function GoalPage() {
   const [goal, setGoal] = useState<WaterGoal | null>(null);
   const [glasses, setGlasses] = useState<number | null>(null);
   const [error, setError] = useState("");
-
-  function greeting(date: Date) {
-    const hour = date.getHours();
-    if (hour < 12) return "Good morning ☀️";
-    if (hour < 17) return "Good afternoon 🌿";
-    return "Good evening 🌙";
-  }
 
   useEffect(() => {
     try {
@@ -127,6 +123,9 @@ export default function GoalPage() {
   const totalMl = glasses * GLASS_ML;
   const firstName = user?.firstName ?? user?.fullName?.split(" ")[0] ?? "there";
 
+  const currentGreeting = clock ? greetingTime(clock) : null;
+  const GreetingIcon = currentGreeting?.Icon;
+
   return (
     <main className="relative min-h-dvh overflow-hidden bg-(--background) text-(--foreground)">
       <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-72 h-64 w-64 rounded-full bg-(--peach-light)" />
@@ -138,9 +137,17 @@ export default function GoalPage() {
 
           <div className="relative flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-(--teal)">{clock ? greeting(clock) : "Welcome to Ripple 💧"}</p>
+              <p className="flex items-center gap-2 text-sm font-semibold text-(--teal)">
+                {currentGreeting ? currentGreeting.text : "Welcome to Ripple"}
 
-              <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Hi, {firstName} 💧</h2>
+                {GreetingIcon ? <GreetingIcon size={18} strokeWidth={1.7} aria-hidden="true" /> : <WaterDrop width={16} height={22} className="shrink-0" />}
+              </p>
+
+              {/* <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Hi, {firstName} 💧</h2> */}
+              <h1 className="mt-2 flex items-center gap-3 text-3xl font-bold sm:text-4xl">
+                Hi, {firstName}
+                <WaterDrop width={26} height={36} className="shrink-0" />
+              </h1>
 
               <div className="mt-3 text-sm">
                 <DateTimeDisplay />

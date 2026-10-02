@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { GlassWater, CircleCheck } from "lucide-react";
 
 type Props = {
   remainingMl: number;
@@ -89,12 +90,48 @@ export default function DrinkButton({ remainingMl, totalMl, goalMl, busy, onDrin
 
   return (
     <section className="rounded-3xl border border-(--border) bg-(--teal-light) p-6 lg:p-8">
-      <h2 className="text-xl font-bold">{goalReached ? "Well done today! 🎉" : "Just had some water?"}</h2>
+      {/* <h2 className="text-xl font-bold">{goalReached ? "Well done today! 🎉" : "Just had some water?"}</h2> */}
+
+      <h2 className="flex items-center gap-2 text-xl font-bold">
+        {goalReached ? (
+          <>
+            <CircleCheck size={24} strokeWidth={1.5} className="shrink-0 text-(--teal)" aria-hidden="true" />
+            <span>Well done today!</span>
+          </>
+        ) : (
+          "Just had some water?"
+        )}
+      </h2>
 
       <p className="mt-2 text-sm leading-6 text-(--muted)">{goalReached ? "You’ve completed today’s water goal." : "Tap after drinking a glass to update your progress."}</p>
 
-      <button type="button" disabled={pending || goalReached} onClick={() => void handleDrink()} className="mt-5 w-full rounded-2xl bg-(--teal) px-4 py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
+      {/* <button type="button" disabled={pending || goalReached} onClick={() => void handleDrink()} className="mt-5 w-full rounded-2xl bg-(--teal) px-4 py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
         {pending ? "Saving…" : goalReached ? "Today’s goal reached 🎉" : `💧 I drank one glass · ${Math.min(GLASS_ML, remainingMl)} ml`}
+      </button> */}
+      <button type="button" disabled={pending || goalReached} onClick={() => void handleDrink()} className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-(--teal) px-4 py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
+        {/* {pending ? (
+          "Saving…"
+        ) : goalReached ? (
+          "Today’s goal reached 🎉"
+        ) : (
+          <>
+            <GlassWater size={24} strokeWidth={1.5} aria-hidden="true" />
+            <span>I drank one glass · {Math.min(GLASS_ML, remainingMl)} ml</span>
+          </>
+        )} */}
+        {pending ? (
+          "Saving…"
+        ) : goalReached ? (
+          <>
+            <CircleCheck size={24} strokeWidth={1.5} className="shrink-0" aria-hidden="true" />
+            <span>Today’s goal reached</span>
+          </>
+        ) : (
+          <>
+            <GlassWater size={24} strokeWidth={1.5} className="shrink-0" aria-hidden="true" />
+            <span>I drank one glass · {Math.min(GLASS_ML, remainingMl)} ml</span>
+          </>
+        )}
       </button>
 
       <p aria-live="polite" className="mt-3 text-center text-sm font-semibold text-(--teal)">
