@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import DateTimeDisplay from "@/components/DateTimeDisplay";
+import WaterReminders from "@/components/WaterReminders";
+import DrinkButton from "@/components/drinkButton";
+import DrinkLog from "@/components/drinkLog";
+// import { formatTime } from "@/lib/utils";
 
 type WaterLog = {
   id: string;
@@ -36,13 +40,6 @@ function dayBounds(key: string) {
   const start = new Date(year, month - 1, day);
   const end = new Date(year, month - 1, day + 1);
   return { start, end };
-}
-
-function formatTime(value: string | number | Date) {
-  return new Date(value).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 function greeting(date: Date) {
@@ -324,17 +321,22 @@ export default function DashboardPage() {
     });
   }
 
-  async function addGlass() {
-    if (!user || !session || !ready) return;
+  async function addGlass(): Promise<boolean> {
+    if (!user || !session || !ready || busy || operationLock.current || remainingMl <= 0) {
+      return false;
+    }
+
+    let saved = false;
 
     await runOperation(async () => {
       const supabase = createSupabaseClient(() => session.getToken());
+
       const { data, error: saveError } = await supabase
         .from("water_logs")
         .insert({
           id: crypto.randomUUID(),
           user_id: user.id,
-          amount_ml: GLASS_ML,
+          amount_ml: Math.min(GLASS_ML, remainingMl),
           drank_at: new Date().toISOString(),
         })
         .select("id, amount_ml, drank_at")
@@ -345,7 +347,11 @@ export default function DashboardPage() {
       if (dayKey(new Date(data.drank_at)) === currentDay) {
         setLogs((current) => [data as WaterLog, ...current]);
       }
+
+      saved = true;
     });
+
+    return saved;
   }
 
   async function deleteLog(id: string) {
@@ -459,10 +465,9 @@ export default function DashboardPage() {
           </p>
         )}
 
-        {/* <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.3fr_1fr]"> */}
         <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.3fr_1fr]">
           {/* LEFT COLUMN */}
-          {/* <div className="min-w-0 space-y-6"> */}
+
           <div className="flex min-w-0 flex-col gap-6">
             {/* <section className="rounded-3xl border border-(--border) bg-white p-6 text-center lg:p-10"> */}
             <section className="flex flex-col items-center justify-center rounded-3xl border border-(--border) bg-white p-6 text-center lg:flex-1 lg:p-10">
@@ -499,177 +504,29 @@ export default function DashboardPage() {
               </Link>
             </section>
 
-            {/* <section className="rounded-3xl border border-(--border) bg-(--teal-light) p-6 lg:p-8"> */}
-            {/* <section className="flex flex-col justify-center rounded-3xl border border-(--border) bg-(--teal-light) p-6 lg:flex-1 lg:p-8"> */}
-            <section className="rounded-3xl border border-(--border) bg-(--teal-light) p-6 lg:p-8">
-              <h2 className="text-xl font-bold">Just had some water?</h2>
-
-              <p className="mt-2 text-sm leading-6 text-(--muted)">Tap after drinking. We’ll record one 250 ml glass at the current time.</p>
-
-              <button type="button" disabled={busy} onClick={() => void addGlass()} className="mt-5 w-full rounded-2xl bg-(--teal) px-4 py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50">
-                💧 I drank one glass · 250 ml
-              </button>
-
-              <p className="mt-3 text-xs text-(--muted)">Different amount? Edit your entry in the drink log below.</p>
-            </section>
+            <DrinkButton remainingMl={remainingMl} totalMl={totalMl} goalMl={settings.goal_ml} busy={busy} onDrink={addGlass} />
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="min-w-0 space-y-6">
-            <section className="rounded-3xl border border-(--border) bg-white p-6">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-bold">Water reminders</h2>
-
-                  <p className="mt-1 text-sm text-(--muted)">{remindersOn ? "Notifications on" : "Notifications off"}</p>
-                </div>
-
-                <button type="button" disabled={busy} onClick={() => void toggleReminders()} className="shrink-0 rounded-full bg-(--teal-light) px-4 py-2 text-sm font-semibold text-(--teal) disabled:opacity-50">
-                  {remindersOn ? "Turn off" : "Turn on"}
-                </button>
-              </div>
-
-              <p className="mt-5 text-sm font-semibold">Plan timing</p>
-
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                {(
-                  [
-                    { value: "auto", label: "Auto · until bedtime" },
-                    { value: 30, label: "Every 30 minutes" },
-                    { value: 60, label: "Every 1 hour" },
-                    { value: 120, label: "Every 2 hours" },
-                  ] as const
-                ).map((option) => (
-                  <button key={option.value} type="button" disabled={busy} aria-pressed={mode === option.value} onClick={() => void chooseMode(option.value)} className={`rounded-xl border px-3 py-3 text-sm font-semibold transition-colors disabled:opacity-50 ${mode === option.value ? "border-(--teal) bg-(--teal-light) text-(--teal)" : "border-(--border) text-(--muted)"}`}>
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-
-              <p className="mt-3 text-sm leading-6 text-(--muted)">{mode === "auto" ? "Remaining glasses are spaced from now through your awake hours." : "The first reminder starts one interval from now. Prompts stop before bedtime."}</p>
-
-              <div className="mt-5 rounded-2xl bg-(--teal-light) p-5">
-                <p className="text-sm text-(--muted)">{remainingMl === 0 ? "Goal reached · no more prompts today" : !nextReminder ? "No upcoming prompts in this awake period" : remindersOn ? "Next notification" : "Next planned break · notifications off"}</p>
-
-                {nextReminder && remainingMl > 0 && <p className="mt-2 text-4xl font-bold text-(--teal)">{formatTime(nextReminder.at)}</p>}
-              </div>
-
-              {/* Existing browser reminder note */}
-              <p className="mt-3 text-xs leading-5 text-(--muted)">Browser reminders work while this page is running. Closing the app stops them; background tabs may delay them.</p>
-            </section>
-
-            <section className="rounded-3xl border border-(--border) bg-white p-6">
-              <h2 className="text-xl font-bold">Today’s water plan</h2>
-
-              <p className="mt-2 text-sm leading-6 text-(--muted)">
-                Awake {settings.wake_time.slice(0, 5)}–{settings.sleep_time.slice(0, 5)}. These are suggested future breaks.
-              </p>
-
-              {plan.length > 0 ? (
-                <ol className="mt-4 space-y-2">
-                  {plan.map((item, index) => (
-                    <li key={item.at} className="flex items-center justify-between gap-3 rounded-2xl bg-(--teal-light) px-4 py-3">
-                      <div>
-                        <p className="text-sm font-semibold">{item.amount === GLASS_ML ? "One glass · 250 ml" : `Water break · ${item.amount} ml`}</p>
-
-                        <p className="mt-1 text-xs text-(--muted)">{index === 0 ? "Next planned break" : "Planned"}</p>
-                      </div>
-
-                      <time dateTime={new Date(item.at).toISOString()} className="shrink-0 font-semibold text-(--teal)">
-                        {formatTime(item.at)}
-                      </time>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="mt-4 text-sm leading-6 text-(--muted)">{remainingMl === 0 ? "You’ve reached your goal today." : "No suitable reminder slots remain before bedtime. Your plan will start fresh tomorrow."}</p>
-              )}
-
-              {plan.length > 0 && plannedMl < remainingMl && <p className="mt-4 text-sm leading-6 text-(--muted)">This interval allows {plan.length} breaks before bedtime. The rest of your goal is not scheduled.</p>}
-
-              <p className="mt-4 text-xs leading-5 text-(--muted)">A reminder does not record a drink. Your plan adjusts when you log water.</p>
-            </section>
-          </div>
+          <WaterReminders key={loadKey} plan={plan} mode={mode} remainingMl={remainingMl} wakeTime={settings.wake_time} sleepTime={settings.sleep_time} busy={busy} onChooseMode={chooseMode} />
         </div>
 
         {/* FULL-WIDTH DRINK LOG */}
-        <section className="rounded-3xl border border-(--border) bg-white p-6 lg:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-bold">Today’s drink log</h2>
-
-              <p className="mt-1 text-sm text-(--muted)">What you drank and when</p>
-            </div>
-
-            {logs.length > 0 && (
-              <button type="button" disabled={busy} onClick={() => void resetToday()} className="rounded-xl border border-(--border) px-3 py-2 text-sm text-(--coral) disabled:opacity-50">
-                Reset today
-              </button>
-            )}
-          </div>
-
-          {logs.length === 0 ? (
-            <p className="mt-5 rounded-2xl bg-(--teal-light) p-5 text-sm text-(--muted)">No drinks recorded yet. Log a glass after you drink it.</p>
-          ) : (
-            <ul className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {logs.map((log) => (
-                <li key={log.id} className="rounded-2xl border border-(--border) p-4">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--teal-light)">💧</span>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold">{log.amount_ml} ml</p>
-
-                      <p className="text-sm text-(--muted)">Drank at {formatTime(log.drank_at)}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex justify-end gap-4">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => {
-                        setEditingId(log.id);
-                        setEditAmount(String(log.amount_ml));
-                      }}
-                      className="text-sm font-semibold text-(--teal) disabled:opacity-50"
-                    >
-                      Edit
-                    </button>
-
-                    <button type="button" disabled={busy} onClick={() => void deleteLog(log.id)} className="text-sm text-(--coral) disabled:opacity-50">
-                      Delete
-                    </button>
-                  </div>
-
-                  {editingId === log.id && (
-                    <form
-                      className="mt-4 flex flex-wrap items-center gap-2 border-t border-(--border) pt-4"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        void saveEdit(log.id);
-                      }}
-                    >
-                      <label className="flex items-center gap-2 text-sm">
-                        Amount
-                        <input type="number" min="1" step="1" required value={editAmount} onChange={(event) => setEditAmount(event.target.value)} className="w-24 rounded-xl border border-(--border) px-3 py-2" />
-                        ml
-                      </label>
-
-                      <button type="submit" disabled={busy} className="rounded-xl bg-(--teal) px-3 py-2 text-sm text-white disabled:opacity-50">
-                        Save
-                      </button>
-
-                      <button type="button" disabled={busy} onClick={() => setEditingId(null)} className="px-2 text-sm text-(--muted)">
-                        Cancel
-                      </button>
-                    </form>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <DrinkLog
+          logs={logs}
+          busy={busy}
+          editingId={editingId}
+          editAmount={editAmount}
+          onStartEdit={(log) => {
+            setEditingId(log.id);
+            setEditAmount(String(log.amount_ml));
+          }}
+          onEditAmountChange={setEditAmount}
+          onCancelEdit={() => setEditingId(null)}
+          onSaveEdit={saveEdit}
+          onDelete={deleteLog}
+          onReset={resetToday}
+        />
       </div>
     </main>
   );
