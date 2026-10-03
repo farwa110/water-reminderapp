@@ -97,20 +97,6 @@ export default function OnboardingForm() {
             <p className="mt-1 text-sm text-(--muted)">Help us suggest a starting goal.</p>
           </div>
 
-          {/* <label className="block">
-            <span className="mb-2 block text-sm font-semibold sm:text-base">Age range</span>
-
-            <FormSelect name="ageRange" required defaultValue="">
-              <option value="" disabled>
-                Choose your age range
-              </option>
-              <option value="18-30">18–30</option>
-              <option value="31-50">31–50</option>
-              <option value="51-65">51–65</option>
-              <option value="65+">65+</option>
-            </FormSelect>
-          </label> */}
-
           <div>
             <span className="mb-2 block text-sm font-semibold sm:text-base">Age range</span>
 
@@ -151,22 +137,6 @@ export default function OnboardingForm() {
             </div>
           </fieldset>
 
-          {/* <label className="block">
-            <span className="mb-1 block text-sm font-semibold sm:text-base">How much water do you usually drink?</span>
-            <span className="mb-2 block text-sm text-(--muted)">Estimate using a 250 ml glass.</span>
-
-            <FormSelect name="currentGlasses" required defaultValue="">
-              <option value="" disabled>
-                Choose an approximate number
-              </option>
-              <option value="0-2">0–2 glasses</option>
-              <option value="3-4">3–4 glasses</option>
-              <option value="5-6">5–6 glasses</option>
-              <option value="7-8">7–8 glasses</option>
-              <option value="9+">9 or more glasses</option>
-              <option value="unsure">I’m not sure</option>
-            </FormSelect>
-          </label> */}
           <div>
             <span className="mb-1 block text-sm font-semibold sm:text-base">How much water do you usually drink?</span>
 
@@ -196,30 +166,6 @@ export default function OnboardingForm() {
             <p className="mt-1 text-sm text-(--muted)">Keep reminders within your awake hours.</p>
           </div>
 
-          {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="block min-w-0">
-              <span className="mb-2 flex items-center gap-2 text-sm font-semibold sm:text-base">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--teal-light)">
-                  <Sun size={24} strokeWidth={1.8} className="text-(--teal)" fill="#409e9e" fillOpacity={0.25} aria-hidden="true" />
-                </span>
-                Wake time
-              </span>
-
-              <input type="time" name="wakeTime" defaultValue="08:00" required className={fieldClass} />
-            </label>
-
-            <label className="block min-w-0">
-              <span className="mb-2 flex items-center gap-2 text-sm font-semibold sm:text-base">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--teal-light)">
-                  <Moon size={24} strokeWidth={1.8} className="text-(--teal)" fill="#409e9e" fillOpacity={0.25} aria-hidden="true" />
-                </span>
-                Bedtime
-              </span>
-
-              <input type="time" name="bedTime" defaultValue="22:00" required className={fieldClass} />
-            </label>
-          </div> */}
-
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="min-w-0">
               <span className="mb-2 flex items-center gap-2 text-sm font-semibold sm:text-base">
@@ -244,20 +190,6 @@ export default function OnboardingForm() {
             </div>
           </div>
 
-          {/* <label className="block">
-            <span className="mb-2 block text-sm font-semibold sm:text-base">Exercise on a typical day</span>
-
-            <FormSelect name="exercise" required defaultValue="">
-              <option value="" disabled>
-                Choose exercise time
-              </option>
-              <option value="none">None</option>
-              <option value="under-30">Under 30 minutes</option>
-              <option value="30-60">30–60 minutes</option>
-              <option value="over-60">Over 60 minutes</option>
-            </FormSelect>
-          </label> */}
-
           <div>
             <span className="mb-2 block text-sm font-semibold sm:text-base">Exercise on a typical day</span>
 
@@ -275,19 +207,6 @@ export default function OnboardingForm() {
             />
           </div>
 
-          {/* <label className="block">
-            <span className="mb-2 block text-sm font-semibold sm:text-base">
-              Outdoor temperature today <span className="text-sm font-normal text-(--muted)">(optional)</span>
-            </span>
-
-            <div className="relative">
-              <input type="number" name="temperatureC" min="-30" max="55" step="1" placeholder="e.g. 22" className={`${fieldClass} pr-16`} />
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-(--muted)">°C</span>
-            </div>
-
-            <span className="mt-2 block text-xs leading-5 text-(--muted)">Use today’s temperature, not a yearly average.</span>
-          </label> */}
-
           <label className="block">
             <span className="mb-2 block text-sm font-semibold sm:text-base">
               Outdoor temperature today <span className="text-sm font-normal text-(--muted)">(optional)</span>
@@ -301,34 +220,6 @@ export default function OnboardingForm() {
 
             <span className="mt-2 block text-xs leading-5 text-(--muted)">Use today’s temperature, not a yearly average.</span>
           </label>
-
-          {/* <label className="block">
-            <span className="mb-2 block text-sm font-semibold sm:text-base">
-              Life stage <span className="text-sm font-normal text-(--muted)">(optional)</span>
-            </span>
-
-            <FormSelect name="lifeStage" defaultValue="none">
-              <option value="none">None of these</option>
-              <option value="pregnant">Pregnant</option>
-              <option value="breastfeeding">Breastfeeding</option>
-            </FormSelect>
-          </label> */}
-          {/* <div>
-            <span className="mb-2 block text-sm font-semibold sm:text-base">
-              Life stage <span className="text-sm font-normal text-(--muted)">(optional)</span>
-            </span>
-
-            <RippleSelect
-              name="lifeStage"
-              label="Life stage"
-              defaultValue="none"
-              options={[
-                { value: "none", label: "None of these" },
-                { value: "pregnant", label: "Pregnant" },
-                { value: "breastfeeding", label: "Breastfeeding" },
-              ]}
-            />
-          </div> */}
 
           <div>
             <span className="mb-2 block text-sm font-semibold sm:text-base">
