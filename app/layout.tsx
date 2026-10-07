@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
-import CookieBanner from "@/components/CookieBanner";
 
 export const metadata: Metadata = {
   title: "Ripple",
@@ -18,10 +17,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body>
-          {children}
-          <CookieBanner />
-        </body>
+        <body>{children}</body>
       </html>
     </ClerkProvider>
   );
