@@ -12,6 +12,8 @@ import DrinkLog from "@/components/drinkLog";
 import { greetingTime } from "@/lib/greetingTime";
 import WaterDrop from "@/components/WaterDrop";
 import { CircleCheck } from "lucide-react";
+import RippleLoading from "@/components/RippleLoading";
+import GoalHeader from "@/components/GoalHeader";
 type WaterLog = {
   id: string;
   amount_ml: number;
@@ -411,16 +413,7 @@ export default function DashboardPage() {
   if (!ready || !settings || !clock) {
     return (
       <main className="p-8 text-(--foreground)">
-        {error ? (
-          <>
-            <p role="alert">{error}</p>
-            <button onClick={() => setRetry((value) => value + 1)} className="mt-4 rounded-xl bg-(--teal) px-4 py-3 text-white">
-              Try again
-            </button>
-          </>
-        ) : (
-          <p>Loading Ripple…</p>
-        )}
+        <RippleLoading />
       </main>
     );
   }
@@ -434,35 +427,13 @@ export default function DashboardPage() {
   const GreetingIcon = currentGreeting?.Icon;
 
   return (
-    <main className=" relative overflow-hidden min-h-dvh bg-(--background) text-(--foreground)">
-      <div className="pointer-events-none absolute -left-24 top-28 h-48 w-48 rounded-full bg-(--peach-light)" />
-      <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-(--teal-light)" />
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <header className="relative overflow-hidden rounded-3xl border border-(--border) bg-white p-6 lg:p-8">
-          <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 h-52 w-52 rounded-full bg-(--teal-light)" />
+    <main className="relative isolate min-h-dvh overflow-hidden bg-(--background) text-(--foreground)">
+      <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-28 z-0 h-48 w-48 rounded-full bg-(--peach-light)" />
 
-          <div className="relative flex items-start justify-between gap-4">
-            <div>
-              {/* <p className="text-sm font-semibold text-(--teal)">{greeting(clock)}</p> */}
-              <p className="flex items-center gap-2 text-sm font-semibold text-(--teal)">
-                {currentGreeting?.text ?? "Welcome to Ripple"}
+      <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 z-0 h-80 w-80 rounded-full bg-(--teal-light)" />
 
-                {GreetingIcon ? <GreetingIcon size={18} strokeWidth={1.7} aria-hidden="true" /> : <WaterDrop width={16} height={22} className="shrink-0" />}
-              </p>
-
-              <h1 className="mt-2 flex items-center gap-3 text-3xl font-bold sm:text-4xl">
-                Hi, {firstName}
-                <WaterDrop width={26} height={36} className="shrink-0" />
-              </h1>
-
-              <div className="mt-3 text-sm">
-                <DateTimeDisplay />
-              </div>
-            </div>
-
-            <UserButton />
-          </div>
-        </header>
+      <div className="relative z-10 mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+        <GoalHeader firstName={firstName} clock={clock} />
 
         {error && (
           <p role="alert" className="rounded-2xl border border-(--coral) bg-(--peach-light) p-4 text-sm">

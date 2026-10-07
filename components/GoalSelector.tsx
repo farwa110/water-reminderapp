@@ -17,13 +17,24 @@ export default function GoalSelector({ recommendedGlasses, glasses, setGlasses, 
   const totalMl = glasses * GLASS_ML;
 
   return (
-    <section className="min-w-0 rounded-3xl border border-(--border) bg-white p-5 sm:p-8 lg:p-10">
-      <div className="text-center">
+    // <section className="min-w-0 rounded-3xl border border-(--border) bg-white p-5 sm:p-8 lg:p-10">
+    <section className="h-full min-w-0 rounded-3xl border border-(--border) bg-white p-5 sm:p-8 lg:p-10">
+      {/* <div className="text-center">
         <span className="inline-flex rounded-full bg-(--teal-light) px-4 py-2 text-xs font-semibold text-(--teal) sm:text-sm">Ripple suggests {recommendedGlasses} glasses</span>
 
         <h2 className="mt-5 text-xl font-bold sm:text-2xl">How many glasses a day?</h2>
 
-        <p className="mt-2 text-sm text-(--muted)">One glass = {GLASS_ML} ml</p>
+        <p className="mt-2 text-sm text-(--muted)">One glass = {GLASS_ML} ml</p> */}
+      <div className="text-center">
+        <div className="flex min-h-9 items-center justify-center">
+          <span className="inline-flex rounded-full bg-(--teal-light) px-4 py-2 sm:py-4 text-xs font-semibold text-(--teal) sm:text-sm">Ripple suggests {recommendedGlasses} glasses</span>
+        </div>
+
+        <p className="mt-6 text-xs font-semibold uppercase tracking-widest text-(--teal) sm:mt-8">Your daily target</p>
+
+        <h2 className="mt-3 text-xl font-bold sm:text-2xl">How many glasses a day?</h2>
+
+        <p className="mt-4 text-sm leading-6 text-(--muted) sm:mt-5 sm:text-base sm:leading-7">One glass = {GLASS_ML} ml</p>
 
         <div className="mt-6 sm:mt-8">
           <div className="flex items-center justify-center gap-3 sm:gap-8">

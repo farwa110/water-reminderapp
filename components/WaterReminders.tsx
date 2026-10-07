@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, BellOff, Droplet, X, CircleCheck } from "lucide-react";
 import { formatTime } from "@/lib/utils";
+import MobileBottomSheet from "@/components/MobileBottomSheet";
 
 type PlanItem = {
   at: number;
@@ -189,97 +190,102 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
 
   return (
     <div className="min-w-0 space-y-6">
-      <section className="rounded-3xl border border-(--border) bg-white p-6">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-bold">Water reminders</h2>
-            <p className="mt-1 text-sm text-(--muted)">{enabled ? "Reminders and bell sound on" : "Tap the bell to enable reminders"}</p>
+      <MobileBottomSheet position="left" title="Water reminders" icon={<Bell size={22} strokeWidth={1.7} />} summary={enabled ? "Reminders on" : "Reminders off"}>
+        <section className="rounded-3xl border border-(--border) bg-white p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold">Water reminders</h2>
+              <p className="mt-1 text-sm text-(--muted)">{enabled ? "Reminders and bell sound on" : "Tap the bell to enable reminders"}</p>
+            </div>
+
+            <button type="button" onClick={toggleBell} aria-pressed={enabled} aria-label={enabled ? "Turn reminders off" : "Turn reminders on"} title={enabled ? "Turn reminders off" : "Turn reminders on"} className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border transition-colors ${enabled ? "border-(--teal) bg-(--teal) text-white" : "border-(--border) bg-(--teal-light) text-(--teal)"}`}>
+              {enabled ? <Bell size={25} strokeWidth={1.7} /> : <BellOff size={25} strokeWidth={1.7} />}
+            </button>
           </div>
 
-          <button type="button" onClick={toggleBell} aria-pressed={enabled} aria-label={enabled ? "Turn reminders off" : "Turn reminders on"} title={enabled ? "Turn reminders off" : "Turn reminders on"} className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border transition-colors ${enabled ? "border-(--teal) bg-(--teal) text-white" : "border-(--border) bg-(--teal-light) text-(--teal)"}`}>
-            {enabled ? <Bell size={25} strokeWidth={1.7} /> : <BellOff size={25} strokeWidth={1.7} />}
-          </button>
-        </div>
+          {soundError && (
+            <p role="status" className="mt-3 text-xs text-(--coral)">
+              {soundError}
+            </p>
+          )}
 
-        {soundError && (
-          <p role="status" className="mt-3 text-xs text-(--coral)">
-            {soundError}
-          </p>
-        )}
+          <p className="mt-5 text-sm font-semibold">Plan timing</p>
 
-        <p className="mt-5 text-sm font-semibold">Plan timing</p>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {(
-            [
-              { value: "auto", label: "Auto · until bedtime" },
-              { value: 30, label: "Every 30 minutes" },
-              { value: 60, label: "Every 1 hour" },
-              { value: 120, label: "Every 2 hours" },
-            ] as const
-          ).map((option) => (
-            <button key={option.value} type="button" disabled={busy} aria-pressed={mode === option.value} onClick={() => void onChooseMode(option.value)} className={`rounded-xl border px-3 py-3 text-sm font-semibold disabled:opacity-50 ${mode === option.value ? "border-(--teal) bg-(--teal-light) text-(--teal)" : "border-(--border) text-(--muted)"}`}>
-              {option.label}
-            </button>
-          ))}
-        </div>
-
-        <p className="mt-3 text-sm leading-6 text-(--muted)">{mode === "auto" ? "Remaining glasses are spaced through your awake hours." : "Your plan adjusts when you log water. Reminders stop before bedtime."}</p>
-
-        <div className="mt-5 rounded-2xl bg-(--teal-light) p-5">
-          <p className="text-sm text-(--muted)">{remainingMl === 0 ? "Goal reached · no more reminders today" : !nextReminder ? "No upcoming reminders in this awake period" : enabled ? (snoozed ? "Snoozed until" : "Next reminder") : "Next planned break · bell off"}</p>
-
-          {nextReminder && remainingMl > 0 && <p className="mt-2 text-4xl font-bold text-(--teal)">{formatTime(nextReminder.at)}</p>}
-        </div>
-
-        <button type="button" disabled={!enabled || remainingMl <= 0 || busy} onClick={testReminder} className="mt-4 flex items-center gap-2 text-sm font-semibold text-(--teal) disabled:opacity-40">
-          <Bell size={16} />
-          Test reminder
-        </button>
-
-        <p className="mt-3 text-xs leading-5 text-(--muted)">Keep this dashboard open for reminders. Background tabs may delay them. The bell starts off each time you open the dashboard.</p>
-      </section>
-
-      <section className="rounded-3xl border border-(--border) bg-white p-6">
-        <h2 className="text-xl font-bold">Today’s water plan</h2>
-
-        <p className="mt-2 text-sm leading-6 text-(--muted)">
-          Awake {wakeTime.slice(0, 5)}–{sleepTime.slice(0, 5)}. These are suggested future breaks.
-        </p>
-
-        {plan.length > 0 ? (
-          <ol className="mt-4 space-y-2">
-            {plan.map((item) => (
-              <li key={item.at} className="flex items-center justify-between gap-3 rounded-2xl bg-(--teal-light) px-4 py-3">
-                <div>
-                  <p className="text-sm font-semibold">Water break · {item.amount} ml</p>
-                  <p className="mt-1 text-xs text-(--muted)">{handledRef.current.has(item.at) ? "Reminder passed" : "Planned"}</p>
-                </div>
-
-                <time dateTime={new Date(item.at).toISOString()} className="shrink-0 font-semibold text-(--teal)">
-                  {formatTime(item.at)}
-                </time>
-              </li>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {(
+              [
+                { value: "auto", label: "Auto · until bedtime" },
+                { value: 30, label: "Every 30 minutes" },
+                { value: 60, label: "Every 1 hour" },
+                { value: 120, label: "Every 2 hours" },
+              ] as const
+            ).map((option) => (
+              <button key={option.value} type="button" disabled={busy} aria-pressed={mode === option.value} onClick={() => void onChooseMode(option.value)} className={`rounded-xl border px-3 py-3 text-sm font-semibold disabled:opacity-50 ${mode === option.value ? "border-(--teal) bg-(--teal-light) text-(--teal)" : "border-(--border) text-(--muted)"}`}>
+                {option.label}
+              </button>
             ))}
-          </ol>
-        ) : (
-          // <p className="mt-4 text-sm leading-6 text-(--muted)">{remainingMl === 0 ? "You’ve reached your goal today. 🎉" : "No suitable reminder slots remain before bedtime."}</p>
-          <p className="mt-4 flex items-center gap-2 text-sm leading-6 text-(--muted)">
-            {remainingMl === 0 ? (
-              <>
-                <CircleCheck size={18} strokeWidth={1.5} className="shrink-0 text-(--teal)" aria-hidden="true" />
-                <span>You’ve reached your goal today.</span>
-              </>
-            ) : (
-              "No suitable reminder slots remain before bedtime."
-            )}
+          </div>
+
+          <p className="mt-3 text-sm leading-6 text-(--muted)">{mode === "auto" ? "Remaining glasses are spaced through your awake hours." : "Your plan adjusts when you log water. Reminders stop before bedtime."}</p>
+
+          <div className="mt-5 rounded-2xl bg-(--teal-light) p-5">
+            <p className="text-sm text-(--muted)">{remainingMl === 0 ? "Goal reached · no more reminders today" : !nextReminder ? "No upcoming reminders in this awake period" : enabled ? (snoozed ? "Snoozed until" : "Next reminder") : "Next planned break · bell off"}</p>
+
+            {nextReminder && remainingMl > 0 && <p className="mt-2 text-4xl font-bold text-(--teal)">{formatTime(nextReminder.at)}</p>}
+          </div>
+
+          <button type="button" disabled={!enabled || remainingMl <= 0 || busy} onClick={testReminder} className="mt-4 flex items-center gap-2 text-sm font-semibold text-(--teal) disabled:opacity-40">
+            <Bell size={16} />
+            Test reminder
+          </button>
+
+          <p className="mt-3 text-xs leading-5 text-(--muted)">Keep this dashboard open for reminders. Background tabs may delay them. The bell starts off each time you open the dashboard.</p>
+        </section>
+      </MobileBottomSheet>
+
+      {/* <MobileBottomSheet position="right" title="Today’s water plan" icon={<Droplet size={22} strokeWidth={1.7} />} summary={`${plan.length} planned water ${plan.length === 1 ? "break" : "breaks"}`}> */}
+      <MobileBottomSheet position="right" title="Today’s water plan" icon={<Droplet size={22} strokeWidth={1.7} />} summary={`${plan.length} planned water breaks`}>
+        <section className="rounded-3xl border border-(--border) bg-white p-6">
+          <h2 className="text-xl font-bold">Today’s water plan</h2>
+
+          <p className="mt-2 text-sm leading-6 text-(--muted)">
+            Awake {wakeTime.slice(0, 5)}–{sleepTime.slice(0, 5)}. These are suggested future breaks.
           </p>
-        )}
 
-        {plan.length > 0 && plannedMl < remainingMl && <p className="mt-4 text-sm text-(--muted)">This interval allows {plan.length} breaks before bedtime. The rest of your goal is not scheduled.</p>}
+          {plan.length > 0 ? (
+            <ol className="mt-4 space-y-2">
+              {plan.map((item) => (
+                <li key={item.at} className="flex items-center justify-between gap-3 rounded-2xl bg-(--teal-light) px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold">Water break · {item.amount} ml</p>
 
-        <p className="mt-4 text-xs leading-5 text-(--muted)">A reminder does not record a drink. Tap “I drank one glass” after drinking to update your progress.</p>
-      </section>
+                    <p className="mt-1 text-xs text-(--muted)">{handledRef.current.has(item.at) ? "Reminder passed" : "Planned"}</p>
+                  </div>
+
+                  <time dateTime={new Date(item.at).toISOString()} className="shrink-0 font-semibold text-(--teal)">
+                    {formatTime(item.at)}
+                  </time>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="mt-4 flex items-center gap-2 text-sm leading-6 text-(--muted)">
+              {remainingMl === 0 ? (
+                <>
+                  <CircleCheck size={18} strokeWidth={1.5} className="shrink-0 text-(--teal)" aria-hidden="true" />
+                  <span>You’ve reached your goal today.</span>
+                </>
+              ) : (
+                "No suitable reminder slots remain before bedtime."
+              )}
+            </p>
+          )}
+
+          {plan.length > 0 && plannedMl < remainingMl && <p className="mt-4 text-sm text-(--muted)">This interval allows {plan.length} breaks before bedtime. The rest of your goal is not scheduled.</p>}
+
+          <p className="mt-4 text-xs leading-5 text-(--muted)">A reminder does not record a drink. Tap “I drank one glass” after drinking to update your progress.</p>
+        </section>
+      </MobileBottomSheet>
 
       {popup && enabled && remainingMl > 0 && (
         <section role="region" aria-label="Water reminder" className="fixed bottom-5 left-4 right-4 z-50 rounded-3xl border border-white/80 bg-[#edf9f7]/95 p-6 text-[#19332f] shadow-xl backdrop-blur-xl sm:left-auto sm:right-6 sm:w-96">
