@@ -9,6 +9,7 @@ import { calculateWaterGoal, GLASS_ML, type OnboardingAnswers, type WaterGoal } 
 import GoalHeader from "@/components/GoalHeader";
 import GoalRoutine from "@/components/GoalRoutine";
 import GoalSelector from "@/components/GoalSelector";
+import RippleLoading from "@/components/RippleLoading";
 
 export default function GoalPage() {
   const { user } = useUser();
@@ -115,7 +116,11 @@ export default function GoalPage() {
   }
 
   if (glasses === null || goal === null) {
-    return <main className="p-6">Calculating your starting goal…</main>;
+    return (
+      <main className="p-6">
+        <RippleLoading />
+      </main>
+    );
   }
 
   const firstName = user?.firstName ?? user?.fullName?.split(" ")[0] ?? "there";

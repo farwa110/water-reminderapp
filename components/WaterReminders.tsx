@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { Bell, BellOff, Droplet, X, CircleCheck } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import MobileBottomSheet from "@/components/MobileBottomSheet";
+import { useSession, useUser } from "@clerk/nextjs";
+import { createSupabaseClient } from "@/lib/supabase";
+import { enablePushNotifications } from "@/lib/pushNotifications";
 
 type PlanItem = {
   at: number;
@@ -17,6 +20,7 @@ type Props = {
   wakeTime: string;
   sleepTime: string;
   busy: boolean;
+  onRemindersEnabled: () => void;
   onChooseMode: (mode: "auto" | 30 | 60 | 120) => Promise<void>;
 };
 
@@ -35,7 +39,14 @@ function isAwake(wakeTime: string, sleepTime: string) {
   return wake < sleep ? minutes >= wake && minutes < sleep : minutes >= wake || minutes < sleep;
 }
 
-export default function WaterReminders({ plan, mode, remainingMl, wakeTime, sleepTime, busy, onChooseMode }: Props) {
+export default function WaterReminders({ plan, mode, remainingMl, wakeTime, sleepTime, busy, onChooseMode, onRemindersEnabled }: Props) {
+  const { user } = useUser();
+  const { session } = useSession();
+
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushError, setPushError] = useState("");
+  const pushLock = useRef(false);
+  /**bell  */
   const [enabled, setEnabled] = useState(false);
   const [popup, setPopup] = useState<PlanItem | null>(null);
   const [snoozed, setSnoozed] = useState<PlanItem | null>(null);
@@ -147,31 +158,120 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
     };
   }, [enabled, remainingMl, plan, popup, snoozed, wakeTime, sleepTime]);
 
-  function toggleBell() {
-    if (enabled) {
-      setEnabled(false);
-      setPopup(null);
-      setSnoozed(null);
-      return;
-    }
+  // function toggleBell() {
+  //   if (enabled) {
+  //     setEnabled(false);
+  //     setPopup(null);
+  //     setSnoozed(null);
+  //     return;
+  //   }
 
-    // Skip reminders that passed while the bell was off.
-    plan.forEach((item) => {
-      if (item.at <= Date.now()) {
-        handledRef.current.add(item.at);
+  //   // Skip reminders that passed while the bell was off.
+  //   plan.forEach((item) => {
+  //     if (item.at <= Date.now()) {
+  //       handledRef.current.add(item.at);
+  //     }
+  //   });
+
+  //   setEnabled(true);
+  //   void playBell();
+  // }
+  async function toggleBell() {
+    if (!user || !session || busy || pushLock.current) return;
+
+    pushLock.current = true;
+    setPushBusy(true);
+    setPushError("");
+
+    try {
+      const supabase = createSupabaseClient(() => session.getToken());
+
+      if (enabled) {
+        const { error } = await supabase.from("user_settings").update({ reminders_on: false }).eq("user_id", user.id).select("user_id").single();
+
+        if (error) throw error;
+
+        setEnabled(false);
+        setPopup(null);
+        setSnoozed(null);
+        return;
       }
-    });
 
-    setEnabled(true);
-    void playBell();
+      const subscription = await enablePushNotifications();
+
+      if (!subscription.endpoint || !subscription.keys) {
+        throw new Error("Could not create a valid push subscription.");
+      }
+
+      const { error: subscriptionError } = await supabase.from("push_subscriptions").upsert(
+        {
+          user_id: user.id,
+          endpoint: subscription.endpoint,
+          subscription,
+        },
+        {
+          onConflict: "user_id,endpoint",
+        },
+      );
+
+      if (subscriptionError) throw subscriptionError;
+
+      const { error: settingsError } = await supabase.from("user_settings").update({ reminders_on: true }).eq("user_id", user.id).select("user_id").single();
+
+      if (settingsError) throw settingsError;
+
+      plan.forEach((item) => {
+        if (item.at <= Date.now()) {
+          handledRef.current.add(item.at);
+        }
+      });
+
+      // setEnabled(true);
+      onRemindersEnabled();
+      setEnabled(true);
+      void playBell();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : typeof error === "object" && error !== null && "message" in error ? String(error.message) : "Could not update reminders. Please try again.";
+
+      setPushError(message);
+    } finally {
+      pushLock.current = false;
+      setPushBusy(false);
+    }
   }
 
-  function testReminder() {
-    setPopup({
-      at: Date.now(),
-      amount: Math.min(250, remainingMl),
-    });
-    void playBell();
+  // function testReminder() {
+  //   setPopup({
+  //     at: Date.now(),
+  //     amount: Math.min(250, remainingMl),
+  //   });
+  //   void playBell();
+  // }
+
+  async function testReminder() {
+    if (pushLock.current) return;
+
+    pushLock.current = true;
+    setPushBusy(true);
+    setPushError("");
+
+    try {
+      // const response = await fetch("/api/push/test", {
+      const response = await fetch("/api/test", {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Test notification failed.");
+      }
+    } catch (caught) {
+      setPushError(caught instanceof Error ? caught.message : "Test notification failed.");
+    } finally {
+      pushLock.current = false;
+      setPushBusy(false);
+    }
   }
 
   function snoozeReminder() {
@@ -198,10 +298,31 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
               <p className="mt-1 text-sm text-(--muted)">{enabled ? "Reminders and bell sound on" : "Tap the bell to enable reminders"}</p>
             </div>
 
-            <button type="button" onClick={toggleBell} aria-pressed={enabled} aria-label={enabled ? "Turn reminders off" : "Turn reminders on"} title={enabled ? "Turn reminders off" : "Turn reminders on"} className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border transition-colors ${enabled ? "border-(--teal) bg-(--teal) text-white" : "border-(--border) bg-(--teal-light) text-(--teal)"}`}>
+            {/* <button type="button" onClick={toggleBell} aria-pressed={enabled} aria-label={enabled ? "Turn reminders off" : "Turn reminders on"} title={enabled ? "Turn reminders off" : "Turn reminders on"} className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border transition-colors ${enabled ? "border-(--teal) bg-(--teal) text-white" : "border-(--border) bg-(--teal-light) text-(--teal) disabled:cursor-not-allowed disabled:opacity-50"}`}>
+              {enabled ? <Bell size={25} strokeWidth={1.7} /> : <BellOff size={25} strokeWidth={1.7} />}
+            </button> */}
+            <button
+              type="button"
+              onClick={() => void toggleBell()}
+              disabled={busy || pushBusy || !user || !session}
+              aria-pressed={enabled}
+              aria-busy={pushBusy}
+              aria-label={enabled ? "Turn reminders off" : "Turn reminders on"}
+              title={enabled ? "Turn reminders off" : "Turn reminders on"}
+              className={`flex h-14 w-14 shrink-0 items-center justify-center
+              rounded-full border transition-colors
+              disabled:cursor-not-allowed disabled:opacity-50
+              ${enabled ? "border-(--teal) bg-(--teal) text-white" : "border-(--border) bg-(--teal-light) text-(--teal)"}`}
+            >
               {enabled ? <Bell size={25} strokeWidth={1.7} /> : <BellOff size={25} strokeWidth={1.7} />}
             </button>
           </div>
+
+          {pushError && (
+            <p role="alert" className="mt-3 text-sm text-(--coral)">
+              {pushError}
+            </p>
+          )}
 
           {soundError && (
             <p role="status" className="mt-3 text-xs text-(--coral)">
@@ -234,9 +355,13 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
             {nextReminder && remainingMl > 0 && <p className="mt-2 text-4xl font-bold text-(--teal)">{formatTime(nextReminder.at)}</p>}
           </div>
 
-          <button type="button" disabled={!enabled || remainingMl <= 0 || busy} onClick={testReminder} className="mt-4 flex items-center gap-2 text-sm font-semibold text-(--teal) disabled:opacity-40">
+          {/* <button type="button" disabled={!enabled || remainingMl <= 0 || busy} onClick={testReminder} className="mt-4 flex items-center gap-2 text-sm font-semibold text-(--teal) disabled:opacity-40">
             <Bell size={16} />
             Test reminder
+          </button> */}
+          <button type="button" onClick={() => void testReminder()} disabled={!enabled || busy || pushBusy} className="mt-4 flex items-center gap-2 text-sm font-semibold text-(--teal) disabled:opacity-40">
+            <Bell size={16} />
+            {pushBusy ? "Please wait…" : "Test reminder"}
           </button>
 
           <p className="mt-3 text-xs leading-5 text-(--muted)">Keep this dashboard open for reminders. Background tabs may delay them. The bell starts off each time you open the dashboard.</p>
@@ -246,7 +371,7 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
       {/* <MobileBottomSheet position="right" title="Today’s water plan" icon={<Droplet size={22} strokeWidth={1.7} />} summary={`${plan.length} planned water ${plan.length === 1 ? "break" : "breaks"}`}> */}
       <MobileBottomSheet position="right" title="Today’s water plan" icon={<Droplet size={22} strokeWidth={1.7} />} summary={`${plan.length} planned water breaks`}>
         <section className="rounded-3xl border border-(--border) bg-white p-6">
-          <h2 className="text-xl font-bold">Today’s water plan</h2>
+          <h2 className="text-xl font-bold">Upcoming water plan</h2>
 
           <p className="mt-2 text-sm leading-6 text-(--muted)">
             Awake {wakeTime.slice(0, 5)}–{sleepTime.slice(0, 5)}. These are suggested future breaks.
@@ -262,8 +387,18 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
                     <p className="mt-1 text-xs text-(--muted)">{handledRef.current.has(item.at) ? "Reminder passed" : "Planned"}</p>
                   </div>
 
-                  <time dateTime={new Date(item.at).toISOString()} className="shrink-0 font-semibold text-(--teal)">
+                  {/* <time dateTime={new Date(item.at).toISOString()} className="shrink-0 font-semibold text-(--teal)">
                     {formatTime(item.at)}
+                  </time> */}
+                  <time dateTime={new Date(item.at).toISOString()} className="shrink-0 text-right font-semibold text-(--teal)">
+                    <span className="block">{formatTime(item.at)}</span>
+
+                    <span className="block text-xs font-normal text-(--muted)">
+                      {new Date(item.at).toLocaleDateString(undefined, {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </span>
                   </time>
                 </li>
               ))}

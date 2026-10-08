@@ -52,7 +52,62 @@ function errorMessage(error: unknown) {
   return "Something went wrong. Please try again.";
 }
 
-// Supports routines that cross midnight, e.g. 16:00–02:00.
+// // Supports routines that cross midnight, e.g. 16:00–02:00.
+// function awakeWindow(now: Date, wakeTime: string, sleepTime: string) {
+//   const [wakeHour, wakeMinute] = wakeTime.split(":").map(Number);
+//   const [sleepHour, sleepMinute] = sleepTime.split(":").map(Number);
+
+//   const wake = new Date(now);
+//   wake.setHours(wakeHour, wakeMinute, 0, 0);
+
+//   const sleep = new Date(now);
+//   sleep.setHours(sleepHour, sleepMinute, 0, 0);
+
+//   if (sleep <= wake) {
+//     if (now < sleep) {
+//       wake.setDate(wake.getDate() - 1);
+//     } else {
+//       sleep.setDate(sleep.getDate() + 1);
+//     }
+//   }
+
+//   return { wake, sleep };
+// }
+
+// function makePlan(settings: Settings, remainingMl: number, mode: PlanMode): PlanItem[] {
+//   if (remainingMl <= 0) return [];
+
+//   const now = new Date();
+//   const { wake, sleep } = awakeWindow(now, settings.wake_time, settings.sleep_time);
+
+//   const start = Math.max(now.getTime(), wake.getTime());
+
+//   // Keep the last prompt before bedtime.
+//   const finish = sleep.getTime() - 60_000;
+//   if (finish <= start) return [];
+
+//   const count = Math.ceil(remainingMl / GLASS_ML);
+//   const gap = mode === "auto" ? (finish - start) / count : mode * 60_000;
+
+//   // Don't squeeze reminders into a few seconds near bedtime.
+//   if (mode === "auto" && gap < 30 * 60_000) return [];
+
+//   const plan: PlanItem[] = [];
+
+//   for (let index = 0; index < count; index++) {
+//     const at = Math.round(start + gap * (index + 1));
+//     if (at > finish) break;
+
+//     plan.push({
+//       at,
+//       amount: Math.min(GLASS_ML, remainingMl - index * GLASS_ML),
+//     });
+//   }
+
+//   return plan;
+// }
+
+// Returns the current awake period, or the next one if it has ended.
 function awakeWindow(now: Date, wakeTime: string, sleepTime: string) {
   const [wakeHour, wakeMinute] = wakeTime.split(":").map(Number);
   const [sleepHour, sleepMinute] = sleepTime.split(":").map(Number);
@@ -63,12 +118,24 @@ function awakeWindow(now: Date, wakeTime: string, sleepTime: string) {
   const sleep = new Date(now);
   sleep.setHours(sleepHour, sleepMinute, 0, 0);
 
+  // Bedtime falls on the following day.
   if (sleep <= wake) {
-    if (now < sleep) {
+    sleep.setDate(sleep.getDate() + 1);
+
+    // Before today's bedtime, we're still in yesterday's awake period.
+    const previousSleep = new Date(sleep);
+    previousSleep.setDate(previousSleep.getDate() - 1);
+
+    if (now < previousSleep) {
       wake.setDate(wake.getDate() - 1);
-    } else {
-      sleep.setDate(sleep.getDate() + 1);
+      sleep.setDate(sleep.getDate() - 1);
     }
+  }
+
+  // This period has ended: use tomorrow's routine.
+  if (now >= sleep) {
+    wake.setDate(wake.getDate() + 1);
+    sleep.setDate(sleep.getDate() + 1);
   }
 
   return { wake, sleep };
@@ -81,30 +148,24 @@ function makePlan(settings: Settings, remainingMl: number, mode: PlanMode): Plan
   const { wake, sleep } = awakeWindow(now, settings.wake_time, settings.sleep_time);
 
   const start = Math.max(now.getTime(), wake.getTime());
-
-  // Keep the last prompt before bedtime.
   const finish = sleep.getTime() - 60_000;
-  if (finish <= start) return [];
+  const availableMs = finish - start;
 
-  const count = Math.ceil(remainingMl / GLASS_ML);
-  const gap = mode === "auto" ? (finish - start) / count : mode * 60_000;
+  if (availableMs <= 0) return [];
 
-  // Don't squeeze reminders into a few seconds near bedtime.
-  if (mode === "auto" && gap < 30 * 60_000) return [];
+  const neededBreaks = Math.ceil(remainingMl / GLASS_ML);
+  const minimumGap = 30 * 60_000;
 
-  const plan: PlanItem[] = [];
+  const count = Math.min(neededBreaks, Math.floor(availableMs / (mode === "auto" ? minimumGap : mode * 60_000)));
 
-  for (let index = 0; index < count; index++) {
-    const at = Math.round(start + gap * (index + 1));
-    if (at > finish) break;
+  if (count <= 0) return [];
 
-    plan.push({
-      at,
-      amount: Math.min(GLASS_ML, remainingMl - index * GLASS_ML),
-    });
-  }
+  const gap = mode === "auto" ? availableMs / count : mode * 60_000;
 
-  return plan;
+  return Array.from({ length: count }, (_, index) => ({
+    at: Math.min(finish, Math.round(start + gap * (index + 1))),
+    amount: Math.min(GLASS_ML, remainingMl - index * GLASS_ML),
+  }));
 }
 
 export default function DashboardPage() {
@@ -494,7 +555,8 @@ export default function DashboardPage() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <WaterReminders key={loadKey} plan={plan} mode={mode} remainingMl={remainingMl} wakeTime={settings.wake_time} sleepTime={settings.sleep_time} busy={busy} onChooseMode={chooseMode} />
+          {/* <WaterReminders key={loadKey} plan={plan} mode={mode} remainingMl={remainingMl} wakeTime={settings.wake_time} sleepTime={settings.sleep_time} busy={busy} onChooseMode={chooseMode} /> */}
+          <WaterReminders key={loadKey} plan={plan} mode={mode} remainingMl={remainingMl} wakeTime={settings.wake_time} sleepTime={settings.sleep_time} busy={busy} onChooseMode={chooseMode} onRemindersEnabled={() => setPlanVersion((value) => value + 1)} />
         </div>
 
         {/* FULL-WIDTH DRINK LOG */}
