@@ -176,6 +176,70 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
   //   setEnabled(true);
   //   void playBell();
   // }
+  // async function toggleBell() {
+  //   if (!user || !session || busy || pushLock.current) return;
+
+  //   pushLock.current = true;
+  //   setPushBusy(true);
+  //   setPushError("");
+
+  //   try {
+  //     const supabase = createSupabaseClient(() => session.getToken());
+
+  //     if (enabled) {
+  //       const { error } = await supabase.from("user_settings").update({ reminders_on: false }).eq("user_id", user.id).select("user_id").single();
+
+  //       if (error) throw error;
+
+  //       setEnabled(false);
+  //       setPopup(null);
+  //       setSnoozed(null);
+  //       return;
+  //     }
+
+  //     const subscription = await enablePushNotifications();
+
+  //     if (!subscription.endpoint || !subscription.keys) {
+  //       throw new Error("Could not create a valid push subscription.");
+  //     }
+
+  //     const { error: subscriptionError } = await supabase.from("push_subscriptions").upsert(
+  //       {
+  //         user_id: user.id,
+  //         endpoint: subscription.endpoint,
+  //         subscription,
+  //       },
+  //       {
+  //         onConflict: "user_id,endpoint",
+  //       },
+  //     );
+
+  //     if (subscriptionError) throw subscriptionError;
+
+  //     const { error: settingsError } = await supabase.from("user_settings").update({ reminders_on: true }).eq("user_id", user.id).select("user_id").single();
+
+  //     if (settingsError) throw settingsError;
+
+  //     plan.forEach((item) => {
+  //       if (item.at <= Date.now()) {
+  //         handledRef.current.add(item.at);
+  //       }
+  //     });
+
+  //     // setEnabled(true);
+  //     onRemindersEnabled();
+  //     setEnabled(true);
+  //     void playBell();
+  //   } catch (error) {
+  //     const message = error instanceof Error ? error.message : typeof error === "object" && error !== null && "message" in error ? String(error.message) : "Could not update reminders. Please try again.";
+
+  //     setPushError(message);
+  //   } finally {
+  //     pushLock.current = false;
+  //     setPushBusy(false);
+  //   }
+  // }
+
   async function toggleBell() {
     if (!user || !session || busy || pushLock.current) return;
 
@@ -187,7 +251,15 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
       const supabase = createSupabaseClient(() => session.getToken());
 
       if (enabled) {
-        const { error } = await supabase.from("user_settings").update({ reminders_on: false }).eq("user_id", user.id).select("user_id").single();
+        const { error } = await supabase
+          .from("user_settings")
+          .update({
+            reminders_on: false,
+            next_reminder_at: null,
+          })
+          .eq("user_id", user.id)
+          .select("user_id")
+          .single();
 
         if (error) throw error;
 
@@ -209,14 +281,23 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
           endpoint: subscription.endpoint,
           subscription,
         },
-        {
-          onConflict: "user_id,endpoint",
-        },
+        { onConflict: "user_id,endpoint" },
       );
 
       if (subscriptionError) throw subscriptionError;
 
-      const { error: settingsError } = await supabase.from("user_settings").update({ reminders_on: true }).eq("user_id", user.id).select("user_id").single();
+      const { error: settingsError } = await supabase
+        .from("user_settings")
+        .update({
+          reminders_on: true,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          reminder_mode: String(mode),
+          next_reminder_at: null,
+          ...(mode !== "auto" ? { reminder_minutes: mode } : {}),
+        })
+        .eq("user_id", user.id)
+        .select("user_id")
+        .single();
 
       if (settingsError) throw settingsError;
 
@@ -226,7 +307,6 @@ export default function WaterReminders({ plan, mode, remainingMl, wakeTime, slee
         }
       });
 
-      // setEnabled(true);
       onRemindersEnabled();
       setEnabled(true);
       void playBell();

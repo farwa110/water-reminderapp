@@ -362,22 +362,46 @@ export default function DashboardPage() {
     });
   }
 
+  // async function chooseMode(nextMode: PlanMode) {
+  //   if (!user || !session || busy) return;
+
+  //   await runOperation(async () => {
+  //     if (nextMode !== "auto") {
+  //       const supabase = createSupabaseClient(() => session.getToken());
+  //       const { error: saveError } = await supabase.from("user_settings").update({ reminder_minutes: nextMode }).eq("user_id", user.id).select("user_id").single();
+
+  //       if (saveError) throw saveError;
+  //     }
+
+  //     setMode(nextMode);
+  //     setPlanVersion((value) => value + 1);
+  //   });
+  // }
+
   async function chooseMode(nextMode: PlanMode) {
     if (!user || !session || busy) return;
 
     await runOperation(async () => {
-      if (nextMode !== "auto") {
-        const supabase = createSupabaseClient(() => session.getToken());
-        const { error: saveError } = await supabase.from("user_settings").update({ reminder_minutes: nextMode }).eq("user_id", user.id).select("user_id").single();
+      const supabase = createSupabaseClient(() => session.getToken());
 
-        if (saveError) throw saveError;
-      }
+      const { error: saveError } = await supabase
+        .from("user_settings")
+        .update({
+          reminder_mode: String(nextMode),
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          next_reminder_at: null,
+          ...(nextMode !== "auto" ? { reminder_minutes: nextMode } : {}),
+        })
+        .eq("user_id", user.id)
+        .select("user_id")
+        .single();
+
+      if (saveError) throw saveError;
 
       setMode(nextMode);
       setPlanVersion((value) => value + 1);
     });
   }
-
   async function addGlass(): Promise<boolean> {
     if (!user || !session || !ready || busy || operationLock.current || remainingMl <= 0) {
       return false;
