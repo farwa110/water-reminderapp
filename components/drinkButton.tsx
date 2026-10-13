@@ -32,7 +32,6 @@
 
 //     if (!context || context.state !== "running") return;
 
-//     // A soft rising “ding” after the drink is saved.
 //     [660, 880].forEach((frequency, index) => {
 //       const start = context.currentTime + index * 0.12;
 //       const oscillator = context.createOscillator();
@@ -60,8 +59,6 @@
 //     setSaving(true);
 
 //     try {
-//       // Activate audio during the user's click.
-//       // Sound problems must not prevent saving water.
 //       try {
 //         const context = audioRef.current ?? new AudioContext();
 //         audioRef.current = context;
@@ -89,13 +86,11 @@
 //   }
 
 //   return (
-//     <section className="rounded-3xl border border-(--border) bg-(--teal-light) p-6 lg:p-8">
-//       {/* <h2 className="text-xl font-bold">{goalReached ? "Well done today! 🎉" : "Just had some water?"}</h2> */}
-
-//       <h2 className="flex items-center gap-2 text-xl font-bold">
+//     <section className="min-w-0 rounded-3xl border border-(--border) bg-(--teal-light) p-5 sm:p-6 lg:p-8">
+//       <h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl">
 //         {goalReached ? (
 //           <>
-//             <CircleCheck size={24} strokeWidth={1.5} className="shrink-0 text-(--teal)" aria-hidden="true" />
+//             <CircleCheck size={24} strokeWidth={1.5} className="h-5 w-5 shrink-0 text-(--teal) sm:h-6 sm:w-6" aria-hidden="true" />
 //             <span>Well done today!</span>
 //           </>
 //         ) : (
@@ -105,31 +100,23 @@
 
 //       <p className="mt-2 text-sm leading-6 text-(--muted)">{goalReached ? "You’ve completed today’s water goal." : "Tap after drinking a glass to update your progress."}</p>
 
-//       {/* <button type="button" disabled={pending || goalReached} onClick={() => void handleDrink()} className="mt-5 w-full rounded-2xl bg-(--teal) px-4 py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
-//         {pending ? "Saving…" : goalReached ? "Today’s goal reached 🎉" : `💧 I drank one glass · ${Math.min(GLASS_ML, remainingMl)} ml`}
-//       </button> */}
-//       <button type="button" disabled={pending || goalReached} onClick={() => void handleDrink()} className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-(--teal) px-4 py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
-//         {/* {pending ? (
-//           "Saving…"
-//         ) : goalReached ? (
-//           "Today’s goal reached 🎉"
-//         ) : (
-//           <>
-//             <GlassWater size={24} strokeWidth={1.5} aria-hidden="true" />
-//             <span>I drank one glass · {Math.min(GLASS_ML, remainingMl)} ml</span>
-//           </>
-//         )} */}
+//       <button type="button" disabled={pending || goalReached} onClick={() => void handleDrink()} className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-(--teal) px-3 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:mt-5 sm:px-4 sm:py-4 sm:text-base">
 //         {pending ? (
 //           "Saving…"
 //         ) : goalReached ? (
 //           <>
-//             <CircleCheck size={24} strokeWidth={1.5} className="shrink-0" aria-hidden="true" />
+//             <CircleCheck size={24} strokeWidth={1.5} className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" aria-hidden="true" />
 //             <span>Today’s goal reached</span>
 //           </>
 //         ) : (
 //           <>
-//             <GlassWater size={24} strokeWidth={1.5} className="shrink-0" aria-hidden="true" />
-//             <span>I drank one glass · {Math.min(GLASS_ML, remainingMl)} ml</span>
+//             <GlassWater size={24} strokeWidth={1.5} className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" aria-hidden="true" />
+
+//             <span>
+//               <span className="sm:hidden">Add a glass</span>
+//               <span className="hidden sm:inline">I drank one glass</span>
+//               <span className="whitespace-nowrap"> · {Math.min(GLASS_ML, remainingMl)} ml</span>
+//             </span>
 //           </>
 //         )}
 //       </button>
@@ -157,7 +144,7 @@ type Props = {
 const GLASS_ML = 250;
 
 export default function DrinkButton({ remainingMl, totalMl, goalMl, busy, onDrink }: Props) {
-  const audioRef = useRef<AudioContext | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const clickLock = useRef(false);
   const [saving, setSaving] = useState(false);
 
@@ -166,33 +153,17 @@ export default function DrinkButton({ remainingMl, totalMl, goalMl, busy, onDrin
 
   useEffect(() => {
     return () => {
-      void audioRef.current?.close();
+      audioRef.current?.pause();
     };
   }, []);
 
   function playSuccessSound() {
-    const context = audioRef.current;
+    const audio = audioRef.current;
 
-    if (!context || context.state !== "running") return;
+    if (!audio) return;
 
-    [660, 880].forEach((frequency, index) => {
-      const start = context.currentTime + index * 0.12;
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(frequency, start);
-
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.1, start + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.6);
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-
-      oscillator.start(start);
-      oscillator.stop(start + 0.65);
-    });
+    audio.currentTime = 0;
+    void audio.play().catch(() => {});
   }
 
   async function handleDrink() {
@@ -203,12 +174,9 @@ export default function DrinkButton({ remainingMl, totalMl, goalMl, busy, onDrin
 
     try {
       try {
-        const context = audioRef.current ?? new AudioContext();
-        audioRef.current = context;
-
-        if (context.state === "suspended") {
-          void context.resume().catch(() => {});
-        }
+        const audio = audioRef.current ?? new Audio("/audio/sip-water.wav");
+        audioRef.current = audio;
+        audio.preload = "auto";
       } catch {
         // Continue saving if audio is unavailable.
       }

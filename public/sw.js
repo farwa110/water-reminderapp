@@ -12,9 +12,21 @@ self.addEventListener("push", (event) => {
     };
   }
 
+  //   event.waitUntil(
+  //     self.registration.showNotification(data.title || "Time for a water break", {
+  //       body: data.body || "Take a little sip. Log your glass in Ripple.",
+  //       tag: data.tag || "ripple-water-reminder",
+  //       data: {
+  //         url: "/dashboard",
+  //       },
+  //     }),
+  //   );
+  // });
+
   event.waitUntil(
-    self.registration.showNotification(data.title || "Time for a water break", {
+    self.registration.showNotification(data.title || "Ripple · Time to drink water 💧", {
       body: data.body || "Take a little sip. Log your glass in Ripple.",
+      icon: "/android-chrome-512x512.png",
       tag: data.tag || "ripple-water-reminder",
       data: {
         url: "/dashboard",

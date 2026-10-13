@@ -1,3 +1,5 @@
+//
+
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -9,9 +11,15 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    background_color: "#fffdfa",
+    background_color: "#409e9e",
     theme_color: "#409e9e",
     icons: [
+      {
+        src: "/android-chrome-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
       {
         src: "/android-chrome-512x512.png",
         sizes: "512x512",
