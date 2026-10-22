@@ -211,7 +211,7 @@ h3 {
   height: 112px;
   place-items: center;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 25%;
   background: #fffdfa;
 }
 

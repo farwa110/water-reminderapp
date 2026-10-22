@@ -52,61 +52,6 @@ function errorMessage(error: unknown) {
   return "Something went wrong. Please try again.";
 }
 
-// // Supports routines that cross midnight, e.g. 16:00–02:00.
-// function awakeWindow(now: Date, wakeTime: string, sleepTime: string) {
-//   const [wakeHour, wakeMinute] = wakeTime.split(":").map(Number);
-//   const [sleepHour, sleepMinute] = sleepTime.split(":").map(Number);
-
-//   const wake = new Date(now);
-//   wake.setHours(wakeHour, wakeMinute, 0, 0);
-
-//   const sleep = new Date(now);
-//   sleep.setHours(sleepHour, sleepMinute, 0, 0);
-
-//   if (sleep <= wake) {
-//     if (now < sleep) {
-//       wake.setDate(wake.getDate() - 1);
-//     } else {
-//       sleep.setDate(sleep.getDate() + 1);
-//     }
-//   }
-
-//   return { wake, sleep };
-// }
-
-// function makePlan(settings: Settings, remainingMl: number, mode: PlanMode): PlanItem[] {
-//   if (remainingMl <= 0) return [];
-
-//   const now = new Date();
-//   const { wake, sleep } = awakeWindow(now, settings.wake_time, settings.sleep_time);
-
-//   const start = Math.max(now.getTime(), wake.getTime());
-
-//   // Keep the last prompt before bedtime.
-//   const finish = sleep.getTime() - 60_000;
-//   if (finish <= start) return [];
-
-//   const count = Math.ceil(remainingMl / GLASS_ML);
-//   const gap = mode === "auto" ? (finish - start) / count : mode * 60_000;
-
-//   // Don't squeeze reminders into a few seconds near bedtime.
-//   if (mode === "auto" && gap < 30 * 60_000) return [];
-
-//   const plan: PlanItem[] = [];
-
-//   for (let index = 0; index < count; index++) {
-//     const at = Math.round(start + gap * (index + 1));
-//     if (at > finish) break;
-
-//     plan.push({
-//       at,
-//       amount: Math.min(GLASS_ML, remainingMl - index * GLASS_ML),
-//     });
-//   }
-
-//   return plan;
-// }
-
 // Returns the current awake period, or the next one if it has ended.
 function awakeWindow(now: Date, wakeTime: string, sleepTime: string) {
   const [wakeHour, wakeMinute] = wakeTime.split(":").map(Number);
@@ -361,22 +306,6 @@ export default function DashboardPage() {
       if (turnOn) setPlanVersion((value) => value + 1);
     });
   }
-
-  // async function chooseMode(nextMode: PlanMode) {
-  //   if (!user || !session || busy) return;
-
-  //   await runOperation(async () => {
-  //     if (nextMode !== "auto") {
-  //       const supabase = createSupabaseClient(() => session.getToken());
-  //       const { error: saveError } = await supabase.from("user_settings").update({ reminder_minutes: nextMode }).eq("user_id", user.id).select("user_id").single();
-
-  //       if (saveError) throw saveError;
-  //     }
-
-  //     setMode(nextMode);
-  //     setPlanVersion((value) => value + 1);
-  //   });
-  // }
 
   async function chooseMode(nextMode: PlanMode) {
     if (!user || !session || busy) return;
