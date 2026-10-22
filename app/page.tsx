@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import MainHeader from "@/components/MainHeader";
 import CookieBanner from "@/components/CookieBanner";
+import InstallRipple from "@/components/InstallRipple";
 
 export default function Home() {
   return (
@@ -49,6 +50,7 @@ export default function Home() {
             Log in
           </Link>
         </p>
+        <InstallRipple />
       </div>
     </main>
   );
