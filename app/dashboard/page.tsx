@@ -219,39 +219,39 @@ export default function DashboardPage() {
   }, [ready, settings, remainingMl, mode, planVersion]);
 
   // Display and notifications use the same schedule.
-  useEffect(() => {
-    const next = plan[0];
+  // useEffect(() => {
+  //   const next = plan[0];
 
-    if (!ready || !remindersOn || !next || !settings) return;
+  //   if (!ready || !remindersOn || !next || !settings) return;
 
-    const timer = window.setTimeout(
-      () => {
-        if (!notificationsEnabled.current) return;
+  //   const timer = window.setTimeout(
+  //     () => {
+  //       if (!notificationsEnabled.current) return;
 
-        const now = new Date();
-        const { wake, sleep } = awakeWindow(now, settings.wake_time, settings.sleep_time);
+  //       const now = new Date();
+  //       const { wake, sleep } = awakeWindow(now, settings.wake_time, settings.sleep_time);
 
-        const lateBy = now.getTime() - next.at;
+  //       const lateBy = now.getTime() - next.at;
 
-        if (now >= wake && now < sleep && lateBy < 5 * 60_000 && "Notification" in window && Notification.permission === "granted") {
-          try {
-            new Notification("Time for a water break 💧", {
-              body: `A gentle reminder for ${next.amount} ml. Log it after you drink.`,
-              tag: `ripple-${next.at}`,
-            });
-          } catch {
-            setError("This browser could not show the notification.");
-          }
-        }
+  //       if (now >= wake && now < sleep && lateBy < 5 * 60_000 && "Notification" in window && Notification.permission === "granted") {
+  //         try {
+  //           new Notification("Time for a water break 💧", {
+  //             body: `A gentle reminder for ${next.amount} ml. Log it after you drink.`,
+  //             tag: `ripple-${next.at}`,
+  //           });
+  //         } catch {
+  //           setError("This browser could not show the notification.");
+  //         }
+  //       }
 
-        // Skip missed prompts instead of sending several at once.
-        setPlan((current) => current.filter((item) => item.at > Date.now()));
-      },
-      Math.max(0, next.at - Date.now()),
-    );
+  //       // Skip missed prompts instead of sending several at once.
+  //       setPlan((current) => current.filter((item) => item.at > Date.now()));
+  //     },
+  //     Math.max(0, next.at - Date.now()),
+  //   );
 
-    return () => window.clearTimeout(timer);
-  }, [ready, remindersOn, plan, settings]);
+  //   return () => window.clearTimeout(timer);
+  // }, [ready, remindersOn, plan, settings]);
 
   async function runOperation(work: () => Promise<void>) {
     if (operationLock.current) return;
